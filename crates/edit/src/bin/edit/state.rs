@@ -167,6 +167,9 @@ pub struct State {
     pub encoding_picker_results: Option<Vec<icu::Encoding>>,
 
     pub wants_save: bool,
+    /// Set when a save failed with "permission denied" and the main loop
+    /// should retry it with elevated privileges (`sudo`). See `elevate`.
+    pub elevated_save: Option<PathBuf>,
     pub wants_statusbar_focus: bool,
     pub wants_indentation_picker: bool,
     pub wants_go_to_file: bool,
@@ -217,6 +220,7 @@ impl State {
             encoding_picker_results: Default::default(),
 
             wants_save: false,
+            elevated_save: None,
             wants_statusbar_focus: false,
             wants_encoding_change: StateEncodingChange::None,
             wants_indentation_picker: false,

@@ -13,6 +13,7 @@ use edit::input::{kbmod, vk};
 use edit::tui::*;
 use edit::{icu, path};
 
+use crate::elevate;
 use crate::localization::*;
 use crate::state::*;
 
@@ -244,7 +245,7 @@ pub fn draw_file_picker(ctx: &mut Context, state: &mut State) {
         let res = if state.wants_file_picker == StateFilePicker::Open {
             state.documents.add_file_path(&path).map(|_| ())
         } else if let Some(doc) = state.documents.active_mut() {
-            doc.save(Some(path))
+            doc.save(Some(path.clone()))
         } else {
             Ok(())
         };
@@ -253,7 +254,7 @@ pub fn draw_file_picker(ctx: &mut Context, state: &mut State) {
                 ctx.needs_rerender();
                 done = true;
             }
-            Err(err) => error_log_add(ctx, state, err),
+            Err(err) => elevate::handle_save_error(ctx, state, err, path),
         }
     }
 

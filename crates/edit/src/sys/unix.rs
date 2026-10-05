@@ -197,6 +197,21 @@ pub fn switch_modes() -> io::Result<()> {
     }
 }
 
+/// Restores the terminal to its original (cooked) mode, so that child
+/// processes (e.g. `sudo`) can prompt the user for input on the TTY.
+///
+/// Unlike the `Deinit` guard, this doesn't forget the saved termios, so a
+/// later `switch_modes()` call returns the terminal to raw mode.
+pub fn restore_modes_for_child() {
+    unsafe {
+        #[allow(static_mut_refs)]
+        if let Some(termios) = STATE.stdout_initial_termios.as_ref() {
+            libc::tcsetattr(STATE.stdout, libc::TCSANOW, termios);
+        }
+        set_tty_nonblocking(false);
+    }
+}
+
 pub struct Deinit;
 
 impl Drop for Deinit {

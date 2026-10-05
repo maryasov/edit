@@ -7,6 +7,7 @@ mod draw_editor;
 mod draw_filepicker;
 mod draw_menubar;
 mod draw_statusbar;
+mod elevate;
 mod localization;
 mod settings;
 mod state;
@@ -176,6 +177,20 @@ fn run() -> apperr::Result<()> {
 
         if state.exit {
             break;
+        }
+
+        // An elevated save was requested during input processing. This must
+        // not run inside `draw()`, because it suspends the TUI for the
+        // duration, letting `sudo` prompt for a password on the terminal.
+        if let Some(target) = state.elevated_save.take() {
+            if let Err(err) = elevate::save_elevated(&mut state, &target) {
+                state.add_error(err);
+            }
+            // We left and re-entered the alternate screen; repaint everything.
+            tui.force_full_redraw();
+            // Draw one frame here, so an error added above (or the save
+            // itself) is already part of this iteration's rendered output.
+            draw(&mut tui, None, &mut state);
         }
 
         // Render the UI and write it to the terminal.

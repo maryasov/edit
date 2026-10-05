@@ -877,6 +877,13 @@ impl Tui {
         self.framebuffer.render(arena)
     }
 
+    /// Forces the next render to emit a full frame instead of a diff.
+    /// Needed when the terminal state was disturbed from the outside,
+    /// e.g. after temporarily leaving the alternate screen buffer.
+    pub fn force_full_redraw(&mut self) {
+        self.framebuffer.invalidate();
+    }
+
     /// Recursively renders each node and its children.
     #[allow(clippy::only_used_in_recursion)]
     fn render_node(&mut self, node: &mut Node) {

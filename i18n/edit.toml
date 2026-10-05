@@ -2186,3 +2186,28 @@ uk = "Файл вже існує. Перезаписати?"
 vi = "Tệp đã tồn tại. Bạn có muốn ghi đè không?"
 zh-hans = "文件已存在。要覆盖它吗？"
 zh-hant = "檔案已存在。要覆寫嗎？"
+
+# max-kepler fork: elevated (sudo) saves. Other languages fall back to English.
+[ElevatedSaveNotWritable]
+en = "msedit: the file '{path}' is not writable by the current user."
+ru = "msedit: файл '{path}' недоступен текущему пользователю для записи."
+
+[ElevatedSavePasswordPrompt]
+en = "msedit: saving it with elevated privileges; sudo may ask for your password."
+ru = "msedit: сохранение с повышением прав; sudo может запросить ваш пароль."
+
+[ElevatedSaveFailed]
+en = "Elevated save failed"
+ru = "Не удалось сохранить с повышенными правами"
+
+[ElevatedSaveNoHelper]
+en = "Neither sudo nor doas was found for the elevated save"
+ru = "Для сохранения с повышенными правами не найден ни sudo, ни doas"
+
+[ElevatedSaveStagingFailed]
+en = "Failed to create a temporary file for the elevated save"
+ru = "Не удалось создать временный файл для сохранения с повышенными правами"
+
+[ElevatedSaveNoDocument]
+en = "No document to save"
+ru = "Нет документа для сохранения"

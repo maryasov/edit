@@ -195,6 +195,17 @@ impl Framebuffer {
         back.cursor = Cursor::new_disabled();
     }
 
+    /// Marks the current front buffer as unknown, so the next `render` emits
+    /// a full frame instead of a diff. Use after the terminal state was
+    /// disturbed from the outside (e.g. leaving the alternate screen buffer).
+    pub fn invalidate(&mut self) {
+        let front = &mut self.buffers[self.frame_counter & 1];
+        // Trigger a full redraw. (Yes, it's a hack.)
+        front.fg_bitmap.fill(StraightRgba::from_rgba(0x01000000));
+        // Trigger a cursor update as well, just to be sure.
+        front.cursor = Cursor::new_invalid();
+    }
+
     /// Replaces text contents in a single line of the framebuffer.
     /// All coordinates are in viewport coordinates.
     /// Assumes that control characters have been replaced or escaped.

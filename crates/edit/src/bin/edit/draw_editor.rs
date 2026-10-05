@@ -7,6 +7,7 @@ use edit::icu;
 use edit::input::{kbmod, vk};
 use edit::tui::*;
 
+use crate::elevate;
 use crate::localization::*;
 use crate::state::*;
 
@@ -194,7 +195,8 @@ pub fn draw_handle_save(ctx: &mut Context, state: &mut State) {
     if let Some(doc) = state.documents.active_mut() {
         if doc.path.is_some() {
             if let Err(err) = doc.save(None) {
-                error_log_add(ctx, state, err);
+                let target = doc.path.clone().unwrap_or_default();
+                elevate::handle_save_error(ctx, state, err, target);
             }
         } else {
             // No path? Show the file picker.
