@@ -1,0 +1,91 @@
+name: release
+
+# Builds the `mk` branch (max-kepler personal modification of Microsoft Edit)
+# and publishes a rolling `nightly` GitHub Release with a prebuilt binary
+# tarball. The `msedit-mod-bin` AUR/local package consumes that asset so
+# installation is fast (no compiler needed) on any x86_64 Arch/Manjaro box.
+
+on:
+  push:
+    branches: [mk]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rust toolchain (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build (release)
+        run: cargo build --release --locked
+
+      - name: Stage dist
+        run: |
+          set -eu
+          mkdir -p dist
+          # Prebuilt binary.
+          cp target/release/edit dist/msedit
+          # Manpage: rewrite `edit` -> `msedit` in title/synopsis/name lines.
+          sed -e 's/^\.TH EDIT 1/.TH MSEDIT 1/' \
+              -e 's/^edit \\- a simple text editor$/msedit \\- a simple text editor/' \
+              -e 's/^edit is a simple text editor/msedit is a simple text editor/' \
+              -e 's/\\fBedit\\fP/\\fBmsedit\\fP/g' \
+              assets/manpage/edit.1 > dist/msedit.1
+          # .desktop entry + icon (rename Exec/Icon to `msedit`).
+          sed -e 's/^Exec=edit %F/Exec=msedit %F/' \
+              -e 's/^Icon=edit/Icon=msedit/' \
+              assets/com.microsoft.edit.desktop > dist/msedit.desktop
+          cp assets/edit.svg dist/msedit.svg
+          cp LICENSE dist/LICENSE
+
+      - name: Create tarball + checksums
+        run: |
+          set -eu
+          ARCH=x86_64
+          ( cd dist && tar --sort=name --owner=0 --group=0 --numeric-owner \
+              --mtime='UTC 1970-01-01' -cf "../msedit-${ARCH}.tar" . )
+          zstd -19 -T0 -f msedit-${ARCH}.tar -o msedit-${ARCH}.tar.zst
+          sha256sum msedit-${ARCH}.tar.zst | tee checksums-${ARCH}.txt
+          ls -la msedit-${ARCH}.tar.zst checksums-${ARCH}.txt
+
+      - name: Rolling nightly release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          # Replace any previous `nightly` release (rolling tag) so the asset
+          # URL `releases/download/nightly/msedit-x86_64.tar.zst` always points
+          # at the latest successful build of the `mk` branch.
+          gh release delete nightly --cleanup-tag -y || true
+          gh release create nightly \
+            --title "nightly ($(git rev-parse --short=7 HEAD))" \
+            --notes "Prebuilt msedit (max-kepler modified build) from branch \`mk\` @ $(git rev-parse --short=7 HEAD).
+
+          Consumed by the \`msedit-mod-bin\` Arch package:
+          \`\`\`
+          yay -S msedit-mod-bin   # once published to AUR
+          # or locally:
+          makepkg -si msedit-mod-bin/PKGBUILD
+          \`\`\`" \
+            --prerelease \
+            msedit-x86_64.tar.zst checksums-x86_64.txt
