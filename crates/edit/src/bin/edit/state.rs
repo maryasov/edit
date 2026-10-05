@@ -134,6 +134,10 @@ pub struct State {
     pub menubar_color_bg: StraightRgba,
     pub menubar_color_fg: StraightRgba,
 
+    /// True if the menubar (or one of its menus) holds focus this frame.
+    /// Used to keep Escape from exiting the editor while navigating menus.
+    pub menubar_contains_focus: bool,
+
     pub documents: DocumentManager,
 
     // A ring buffer of the last 10 errors.
@@ -184,6 +188,7 @@ impl State {
         Ok(Self {
             menubar_color_bg: StraightRgba::zero(),
             menubar_color_fg: StraightRgba::zero(),
+            menubar_contains_focus: false,
 
             documents: Default::default(),
 

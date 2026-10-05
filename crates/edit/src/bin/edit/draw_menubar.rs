@@ -16,6 +16,7 @@ pub fn draw_menubar(ctx: &mut Context, state: &mut State) {
     ctx.attr_foreground_rgba(state.menubar_color_fg);
     {
         let contains_focus = ctx.contains_focus();
+        state.menubar_contains_focus = contains_focus;
 
         if ctx.menubar_menu_begin(loc(LocId::File), 'F') {
             draw_menu_file(ctx, state);
